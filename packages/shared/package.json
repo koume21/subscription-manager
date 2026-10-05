@@ -1,0 +1,9 @@
+{
+  "name": "@subs/shared",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./schemas": "./schemas/index.ts",
+    "./domain": "./domain/index.ts"
+  }
+}

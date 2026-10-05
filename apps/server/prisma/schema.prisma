@@ -1,0 +1,9 @@
+// Prisma スキーマ。モデルは M2 で docs/04_database.md に従って追加する
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
