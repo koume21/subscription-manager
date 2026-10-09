@@ -1,23 +1,19 @@
 {
   "name": "@subs/server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch src/api.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/api.ts",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
     "@subs/shared": "workspace:*",
     "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.4",
+    "@types/node": "^24.19.1",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   }
 }

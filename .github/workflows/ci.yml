@@ -15,4 +15,6 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter web build
+      - run: pnpm -r typecheck
+      - run: pnpm --filter @subs/web lint
+      - run: pnpm --filter @subs/web build

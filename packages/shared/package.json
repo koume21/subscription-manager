@@ -5,5 +5,11 @@
   "exports": {
     "./schemas": "./schemas/index.ts",
     "./domain": "./domain/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }
