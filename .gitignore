@@ -3,4 +3,5 @@ dist/
 .next/
 .env
 .env.*
+!.env.example
 apps/server/src/generated/
