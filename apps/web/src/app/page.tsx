@@ -1,9 +1,9 @@
-import Image from "next/image";
+import { APP_NAME } from "@subs/shared/schemas";
 
 export default function Home() {
   return (
     <div>
-      <h1>サブスク管理アプリ</h1>
+      <h1>{APP_NAME}</h1>
     </div>
   );
 }

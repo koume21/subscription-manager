@@ -136,7 +136,7 @@ jobs:
 
 | Render サービス | 種別 | 内容 | 開始/ビルドコマンド |
 |---|---|---|---|
-| `subs-web` | Web Service | Next.js | `pnpm --filter web build` / `pnpm --filter web start` |
+| `subs-web` | Web Service | Next.js | `pnpm --filter @subs/web build` / `pnpm --filter @subs/web start` |
 | `subs-api` | Web Service（または Private Service） | Express API | `pnpm --filter server build` / `node dist/api.js` |
 | `subs-worker` | Background Worker | BullMQ ワーカー | 同上 / `node dist/worker.js` |
 | `subs-db` | PostgreSQL | | |

@@ -79,6 +79,13 @@ apps/server/src/generated/
 
 ## 3. 共有パッケージ（packages/shared）
 
+```powershell
+mkdir packages/shared/schemas, packages/shared/domain
+pnpm --filter @subs/shared add -D typescript@^5.9.3
+```
+
+（`pnpm --filter` は `package.json` を先に作ってから実行する）
+
 **`packages/shared/package.json`**
 
 ```json
@@ -87,17 +94,54 @@ apps/server/src/generated/
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./schemas": "./schemas/index.ts",
+    "./domain": "./domain/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
   }
 }
 ```
 
-**`packages/shared/src/index.ts`**
+- `exports` に書いた入口だけが外から import できる（`@subs/shared/schemas`・`@subs/shared/domain`）
+- ビルドせず `.ts` のまま公開する（server は tsx、web は Next.js がそのまま変換する）
+
+**`packages/shared/schemas/index.ts`**
 
 ```ts
 // web と server で共有するコード（動作確認用の定数）
 export const APP_NAME = 'サブスク管理';
 ```
+
+**`packages/shared/domain/index.ts`**
+
+```ts
+// 純粋関数（更新日計算・金額換算・リマインダー計画）を置く。DB に依存しないこと
+export {};
+```
+
+**`packages/shared/tsconfig.json`**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+`types: []` で Node やブラウザの型を読み込まず、どちらでも動くコードだけを書けるようにしている。
 
 ---
 
@@ -108,26 +152,53 @@ mkdir apps/server/src
 cd apps/server
 pnpm init
 pnpm add express "@subs/shared@workspace:*"
-pnpm add -D typescript tsx @types/express @types/node
+pnpm add -D typescript@^5.9.3 tsx @types/express @types/node@^24
 cd ../..
 ```
 
-**`apps/server/package.json`**：`name` と `scripts` を変更（他の欄はそのまま）
+**`apps/server/package.json`**：`pnpm init` が作った `version`・`description`・`main` などの欄は消し、次の形にする（依存関係の欄はそのまま）
 
 ```json
 {
   "name": "@subs/server",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/api.ts",
+    "typecheck": "tsc --noEmit"
   }
 }
 ```
 
-**`apps/server/src/index.ts`**
+**`apps/server/tsconfig.json`**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}
+```
+
+実行は tsx が行うので、tsconfig は型チェック（`pnpm --filter @subs/server typecheck`）専用。
+
+**`apps/server/src/api.ts`**（API サーバーの起動。ワーカーは別エントリーポイントの `src/worker.ts` に M6 で作る）
 
 ```ts
 import express from 'express';
-import { APP_NAME } from '@subs/shared';
+import { APP_NAME } from '@subs/shared/schemas';
 
 const app = express();
 
@@ -149,10 +220,17 @@ app.listen(4000, () => {
 cd apps
 pnpm create next-app@latest web --yes
 cd ..
+pnpm --filter web add "@subs/shared@workspace:*"
+pnpm --filter web add -D typescript@^5.9.3 @types/node@^24
 ```
 
 - `--yes` で既定の設定のまま作成する
 - `apps/web` の中に `pnpm-workspace.yaml`・`pnpm-lock.yaml`・`.git` が作られていたら削除する（ルートで一元管理するため）
+- `apps/web/package.json` の `name` を `@subs/web` に変更し、`packageManager` の行を削除する（ルートで指定済み）
+- `src/app/layout.tsx` の `metadata` と `lang` をアプリに合わせて書き換える（`lang="ja"`）
+- `transpilePackages` の設定は不要（Next.js 16 はワークスペースのパッケージを自動で変換する）
+
+TypeScript は 5.9 系にそろえる。7 系は `eslint-config-next`（typescript-eslint）が未対応で、`pnpm --filter @subs/web lint` が失敗する。
 
 ---
 
@@ -165,8 +243,14 @@ pnpm dev
 
 | 確認先 | 期待結果 |
 |---|---|
-| http://localhost:3000 | Next.js の初期画面 |
+| http://localhost:3000 | 「サブスク管理」の見出し（`@subs/shared` の `APP_NAME`） |
 | http://localhost:4000/api/v1/ping | `{"message":"サブスク管理 API is running"}` |
+
+型チェック（server と shared）：
+
+```powershell
+pnpm -r typecheck
+```
 
 確認できたら最初のコミットをする。
 
@@ -188,7 +272,7 @@ git commit -m "chore: 開発環境の初期構築"
 | TanStack Query・React Hook Form | M4 CRUD 画面 |
 | Recharts | M5 可視化 |
 | BullMQ・Worker・メール送信 | M6 非同期基盤 |
-| tsconfig の調整・ESLint・Prettier・CI | M8 仕上げ（必要に応じて前倒し） |
+| Prettier・CI の拡充（テスト実行など） | M8 仕上げ（必要に応じて前倒し） |
 
 Prisma を入れるときは、`prisma` と `@prisma/client` のバージョンをそろえる（npm の `prisma` の `latest` タグが RC 版を指していることがあるため、`prisma@<clientと同じ版>` と明示する）。
 
