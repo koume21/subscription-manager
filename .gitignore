@@ -9,3 +9,6 @@ apps/server/src/generated/
 # 個人用ドキュメント（非公開）
 docs/command/
 docs/monorepo_explain.md
+docs/signup_steps.md
+docs/study/
+/CLAUDE.md
