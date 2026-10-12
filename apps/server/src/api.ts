@@ -44,7 +44,10 @@ app.post('/api/v1/auth/signup', async (req, res) => {
     if(existingUser){
       console.log('既に登録済みのユーザーです');
       // メールアドレスの列挙を防ぐために202で返す
-      return res.status(202).json({message: SIGNUP_ACCEPTED_MESSAGE })
+      return res.status(202).json({
+        status:202,
+        message: SIGNUP_ACCEPTED_MESSAGE
+      })
     }
 
     await prisma.user.create({
@@ -53,13 +56,21 @@ app.post('/api/v1/auth/signup', async (req, res) => {
         passwordHash: passwordHash
       },
     });
-    return res.status(202).json({message: SIGNUP_ACCEPTED_MESSAGE })
+    return res.status(202).json({
+      status:202,
+      message: SIGNUP_ACCEPTED_MESSAGE
+    })
   } catch (error) {
     
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return res.status(202).json({message: SIGNUP_ACCEPTED_MESSAGE })
+      return res.status(202).json({
+        status:202,
+        message: SIGNUP_ACCEPTED_MESSAGE
+      })
     }
+    //errorログ出力
     console.error(error);
+
     return res.status(500).json({
       title: 'サーバーでエラーが発生しました',
       status: 500,
