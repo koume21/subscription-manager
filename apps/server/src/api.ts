@@ -17,10 +17,10 @@ app.get('/api/v1/ping', (_req, res) => {
 app.post('/api/v1/auth/signup', async (req, res) => {
   const SIGNUP_ACCEPTED_MESSAGE = '確認メールを送信しました'
   // @subs/shared/schemasにてexportしたSignupSchemaを用いたバリデーションチェック
-  const type_inspection = SignupSchema.safeParse(req.body);
+  const siginup_typpe_inspection = SignupSchema.safeParse(req.body);
   // バリデーションチェックにてエラーが出た場合の処理
-  if (!type_inspection.success){
-    const errors = type_inspection.error.issues.map((issue) => ({
+  if (!siginup_typpe_inspection.success){
+    const errors = siginup_typpe_inspection.error.issues.map((issue) => ({
       field: issue.path.join('.'),
       message: issue.message,
     }));
@@ -36,10 +36,10 @@ app.post('/api/v1/auth/signup', async (req, res) => {
   try {
     // チェックしたデータからpasswordを取得
     // パスワードのハッシュ化処理(./lib/password)
-    const passwordHash = await hashPassword(type_inspection.data.password);
+    const passwordHash = await hashPassword(siginup_typpe_inspection.data.password);
     // 重複emailの確認
     const existingUser = await prisma.user.findUnique({
-      where: { email: type_inspection.data.email}
+      where: { email: siginup_typpe_inspection.data.email}
     });
     if(existingUser){
       console.log('既に登録済みのユーザーです');
@@ -52,7 +52,7 @@ app.post('/api/v1/auth/signup', async (req, res) => {
 
     await prisma.user.create({
       data: {
-        email:        type_inspection.data.email,
+        email:        siginup_typpe_inspection.data.email,
         passwordHash: passwordHash
       },
     });
