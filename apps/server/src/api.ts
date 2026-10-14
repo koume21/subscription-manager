@@ -1,9 +1,11 @@
 import express from 'express';
-import { APP_NAME,SignupSchema } from '@subs/shared/schemas';
-import { hashPassword} from './lib/password'
+import { APP_NAME,SignupSchema,LoginSchema } from '@subs/shared/schemas';
+import { hashPassword,verifyPassword } from './lib/password'
 import { prisma } from './lib/prisma';
 import { Prisma } from './generated/prisma/client';
 
+
+const dummyHash = hashPassword("dummyPassword"); //ダミーのパスワードのハッシュ化
 
 const app = express();
 app.use(express.json());
@@ -78,6 +80,74 @@ app.post('/api/v1/auth/signup', async (req, res) => {
     });
   }
 });
+
+
+
+
+
+// ログインAPI
+app.post('/api/v1/auth/login',async (req, res) => {
+  const LOGIN_SUCCESS_MESSAGE = 'ログインしました';
+  const ERROR_401 = 'メールアドレスまたはパスワードに誤りがあります'
+  // @subs/shared/schemasにてexportしたLoginSchemaを用いたバリデーションチェック
+  const login_type_inspection = LoginSchema.safeParse(req.body);
+  // バリデーションチェックにてエラーが出た場合の処理
+  if(!login_type_inspection.success) {
+    const errors = login_type_inspection.error.issues.map((issue) => ({
+      field: issue.path.join('.'),
+      message: issue.message,
+    }));
+    return res.status(422).json({
+      title: '入力内容に誤りがあります',
+      status: 422,
+      code: 'VALIDATION_ERROR',
+      errors,
+    });
+  }
+  
+  try {
+    // 入力されたメールアドレスからメールアドレス、ハッシュ化されたパスワードの取得
+    const search_user = await prisma.user.findUnique({
+      where: {email: login_type_inspection.data.email },
+      select: { id: true,
+                email: true,
+                passwordHash: true,
+      }
+    });
+    // メールアドレスが見つからなかった場合の処理
+    if(!search_user) {
+      // エラー時でも処理速度を合わせるためにverifyPasswordを実行
+      await verifyPassword(login_type_inspection.data.password,await dummyHash);
+      return res.status(401).json({
+        title: ERROR_401,
+        status: 401,
+        code: 'INVALID_CREDENTIALS',
+      });
+    }
+    // パスワード比較
+    const password_judement = await verifyPassword(login_type_inspection.data.password,search_user.passwordHash);
+    if (password_judement) {
+      return res.status(200).json({
+        status:200,
+        message: LOGIN_SUCCESS_MESSAGE,
+      })
+    } else {
+      return res.status(401).json({
+        title: ERROR_401,
+        status: 401,
+        code: 'INVALID_CREDENTIALS',
+      })
+    }
+  } catch(error) {
+    console.error(error);
+
+    return res.status(500).json({
+      title: 'サーバーでエラーが発生しました',
+      status: 500,
+      code: 'INTERNAL_ERROR',
+    });
+  }
+})
 
 
 // サーバー起動
