@@ -3,6 +3,7 @@ import { APP_NAME,SignupSchema,LoginSchema } from '@subs/shared/schemas';
 import { hashPassword,verifyPassword } from './lib/password'
 import { prisma } from './lib/prisma';
 import { Prisma } from './generated/prisma/client';
+import { errorHandler  } from './middlewares/errorHandler';
 
 
 const dummyHash = hashPassword("dummyPassword"); //ダミーのパスワードのハッシュ化
@@ -62,22 +63,15 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       status:202,
       message: SIGNUP_ACCEPTED_MESSAGE
     })
-  } catch (error) {
+  } catch (err) {
     
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return res.status(202).json({
         status:202,
         message: SIGNUP_ACCEPTED_MESSAGE
       })
     }
-    //errorログ出力
-    console.error(error);
-
-    return res.status(500).json({
-      title: 'サーバーでエラーが発生しました',
-      status: 500,
-      code: 'INTERNAL_ERROR',
-    });
+    throw err;
   }
 });
 
@@ -105,51 +99,42 @@ app.post('/api/v1/auth/login',async (req, res) => {
     });
   }
   
-  try {
-    // 入力されたメールアドレスからメールアドレス、ハッシュ化されたパスワードの取得
-    const search_user = await prisma.user.findUnique({
-      where: {email: login_type_inspection.data.email },
-      select: { id: true,
-                email: true,
-                passwordHash: true,
-      }
-    });
-    // メールアドレスが見つからなかった場合の処理
-    if(!search_user) {
-      // エラー時でも処理速度を合わせるためにverifyPasswordを実行
-      await verifyPassword(login_type_inspection.data.password,await dummyHash);
-      return res.status(401).json({
-        title: ERROR_401,
-        status: 401,
-        code: 'INVALID_CREDENTIALS',
-      });
+  // 入力されたメールアドレスからメールアドレス、ハッシュ化されたパスワードの取得
+  const search_user = await prisma.user.findUnique({
+    where: {email: login_type_inspection.data.email },
+    select: { id: true,
+              email: true,
+              passwordHash: true,
     }
-    // パスワード比較
-    const password_judement = await verifyPassword(login_type_inspection.data.password,search_user.passwordHash);
-    if (password_judement) {
-      return res.status(200).json({
-        status:200,
-        message: LOGIN_SUCCESS_MESSAGE,
-      })
-    } else {
-      return res.status(401).json({
-        title: ERROR_401,
-        status: 401,
-        code: 'INVALID_CREDENTIALS',
-      })
-    }
-  } catch(error) {
-    console.error(error);
-
-    return res.status(500).json({
-      title: 'サーバーでエラーが発生しました',
-      status: 500,
-      code: 'INTERNAL_ERROR',
+  });
+  // メールアドレスが見つからなかった場合の処理
+  if(!search_user) {
+    // エラー時でも処理速度を合わせるためにverifyPasswordを実行
+    await verifyPassword(login_type_inspection.data.password,await dummyHash);
+    return res.status(401).json({
+      title: ERROR_401,
+      status: 401,
+      code: 'INVALID_CREDENTIALS',
     });
+  }
+  // パスワード比較
+  const password_judement = await verifyPassword(login_type_inspection.data.password,search_user.passwordHash);
+  if (password_judement) {
+    return res.status(200).json({
+      status:200,
+      message: LOGIN_SUCCESS_MESSAGE,
+    })
+  } else {
+    return res.status(401).json({
+      title: ERROR_401,
+      status: 401,
+      code: 'INVALID_CREDENTIALS',
+    })
   }
 })
 
-
+// middlewaresの使用
+app.use(errorHandler);
 // サーバー起動
 app.listen(4000, () => {
   console.log('API サーバー起動: http://localhost:4000');
