@@ -19,3 +19,26 @@ export async function createSession(userId:string) {
     });
     return token;
 }
+
+export async function validateSession(token:string) {
+    const tokenHash = hashToken(token);
+    const searchSession = await prisma.session.findUnique({
+        where: { id: tokenHash },
+        select: {
+            id: true,
+            user: {
+                select: {id:true, email:true}
+            },
+            expiresAt: true,
+        }
+    });
+    if(!searchSession) return;
+    if(Date.now() > searchSession.expiresAt.getTime()) {
+        await prisma.session.delete({
+            where: {id: tokenHash},
+        });
+        return;
+    }
+    return searchSession.user;
+
+}
