@@ -1,10 +1,8 @@
 import express from 'express';
 import { SignupSchema,LoginSchema } from '@subs/shared/schemas';
 import { signup_process,login_process } from '../services/auth';
-import { createSession,SESSION_DURATION_MS } from '../services/session';
-
+import { createSession,SESSION_DURATION_MS,COOKIE_NAME } from '../services/session';
 export const authRouter = express.Router();
-export const COOKIE_NAME = '__Host-sid';
 
 
 const SIGNUP_ACCEPTED_MESSAGE = '確認メールを送信しました'

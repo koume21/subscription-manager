@@ -2,6 +2,7 @@ import { generateToken,hashToken } from "../lib/token";
 import { prisma } from "../lib/prisma";
 
 export const SESSION_DURATION_MS = 24 * 30 * 60 * 60 * 1000;
+export const COOKIE_NAME = '__Host-sid';
 
 export async function createSession(userId:string) {
     // tokenを生成
