@@ -1,7 +1,8 @@
 import express from 'express';
 import { SignupSchema,LoginSchema } from '@subs/shared/schemas';
 import { signup_process,login_process } from '../services/auth';
-import { createSession,SESSION_DURATION_MS,COOKIE_NAME } from '../services/session';
+import { createSession,SESSION_DURATION_MS,COOKIE_NAME,deleteSession } from '../services/session';
+import { requireAuth } from '../middlewares/requireAuth';
 export const authRouter = express.Router();
 
 
@@ -67,4 +68,11 @@ authRouter.post('/login', async (req, res) => {
             code: 'INVALID_CREDENTIALS',
         })
     }
+});
+
+authRouter.post('/logout', requireAuth,async(req, res) => {
+    const token = req.cookies[COOKIE_NAME];
+    await deleteSession(token);
+    res.clearCookie(COOKIE_NAME, { path: "/", httpOnly: true, secure: true, sameSite: 'lax' });
+    return res.status(204).end();
 });

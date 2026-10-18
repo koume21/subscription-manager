@@ -43,3 +43,10 @@ export async function validateSession(token:string) {
     return searchSession.user;
 
 }
+
+export async function deleteSession(token:string) {
+    // tokenのhash化
+    const tokenHash = hashToken(token);
+    // セッションの削除
+    await prisma.session.delete({ where: { id: tokenHash }});
+}
