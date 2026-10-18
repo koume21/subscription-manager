@@ -1,7 +1,8 @@
 import express from 'express';
 import { SignupSchema,LoginSchema } from '@subs/shared/schemas';
 import { signup_process,login_process } from '../services/auth';
-
+import { createSession,SESSION_DURATION_MS,COOKIE_NAME,deleteSession } from '../services/session';
+import { requireAuth } from '../middlewares/requireAuth';
 export const authRouter = express.Router();
 
 
@@ -45,24 +46,33 @@ authRouter.post('/login', async (req, res) => {
         message: issue.message,
         }));
         return res.status(422).json({
-        title: '入力内容に誤りがあります',
-        status: 422,
-        code: 'VALIDATION_ERROR',
-        errors,
+            title: '入力内容に誤りがあります',
+            status: 422,
+            code: 'VALIDATION_ERROR',
+            errors,
         });
     }
     
     const login = await login_process(login_type_inspection.data.email,login_type_inspection.data.password);
     if (login) {
+        const token = await createSession(login.id);
+        res.cookie(COOKIE_NAME,token,{ path: '/',httpOnly:true, secure:true, sameSite:'lax', maxAge: SESSION_DURATION_MS})
         return res.status(200).json({
-        status:200,
-        message: LOGIN_SUCCESS_MESSAGE,
+            status:200,
+            message: LOGIN_SUCCESS_MESSAGE,
         })
     } else {
         return res.status(401).json({
-        title: ERROR_401,
-        status: 401,
-        code: 'INVALID_CREDENTIALS',
+            title: ERROR_401,
+            status: 401,
+            code: 'INVALID_CREDENTIALS',
         })
     }
+});
+
+authRouter.post('/logout', requireAuth,async(req, res) => {
+    const token = req.cookies[COOKIE_NAME];
+    await deleteSession(token);
+    res.clearCookie(COOKIE_NAME, { path: "/", httpOnly: true, secure: true, sameSite: 'lax' });
+    return res.status(204).end();
 });
