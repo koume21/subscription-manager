@@ -7,7 +7,6 @@ export const authRouter = express.Router();
 
 
 const SIGNUP_ACCEPTED_MESSAGE = '確認メールを送信しました'
-const LOGIN_SUCCESS_MESSAGE = 'ログインしました';
 const ERROR_401 = 'メールアドレスまたはパスワードに誤りがあります'
 
 authRouter.post('/signup', async (req, res) => {
@@ -57,10 +56,7 @@ authRouter.post('/login', async (req, res) => {
     if (login) {
         const token = await createSession(login.id);
         res.cookie(COOKIE_NAME,token,{ path: '/',httpOnly:true, secure:true, sameSite:'lax', maxAge: SESSION_DURATION_MS})
-        return res.status(200).json({
-            status:200,
-            message: LOGIN_SUCCESS_MESSAGE,
-        })
+        return res.status(200).json(login)
     } else {
         return res.status(401).json({
             title: ERROR_401,
