@@ -85,12 +85,10 @@
 | DELETE | `/me` | ○ | 退会 |
 | GET | `/subscriptions` | ○ | 一覧 |
 | POST | `/subscriptions` | ○ | 登録 |
-| GET | `/subscriptions/{id}` | ○ | 詳細 |
 | PATCH | `/subscriptions/{id}` | ○ | 編集 |
 | DELETE | `/subscriptions/{id}` | ○ | 削除 |
 | POST | `/subscriptions/{id}/cancel` | ○ | 解約済みにする |
 | POST | `/subscriptions/{id}/reactivate` | ○ | 契約中に戻す |
-| GET | `/subscriptions/{id}/reminders` | ○ | 通知履歴 |
 | GET | `/dashboard/summary` | ○ | 可視化用集計 |
 | POST | `/email/unsubscribe` | トークン | 通知の配信停止 |
 | GET | `/healthz` | − | 死活監視（プロセス生存のみ） |
@@ -258,11 +256,11 @@
 3. INSERT
 4. リマインダー生成（ユーザーがメール認証済みかつ通知 ON の場合）
 
-レスポンス：201、`Location: /api/v1/subscriptions/{id}`、本文はサブスクリソース
+レスポンス：201、本文はサブスクリソース
 
-### 5.4 GET /subscriptions/{id} → 200 / 404
+- 1 件だけを取得する API（`GET /subscriptions/{id}`）は持たない。画面は一覧（`GET /subscriptions`）の値を使うため、`Location` ヘッダーも返さない
 
-### 5.5 PATCH /subscriptions/{id} → 200
+### 5.4 PATCH /subscriptions/{id} → 200
 
 - 部分更新。`status` はここでは変更不可（cancel / reactivate を使う）
 - `billingAnchorDate`、`intervalUnit`、`intervalCount` が変わったら `next_renewal_date` を再計算
@@ -270,36 +268,19 @@
   - ※`name` は送信時にサブスクから読むので再生成不要。再生成対象は日付・オフセット・ON/OFF のみ
 - `intervalUnit` を変える場合は `intervalCount` も同時に検証（YEAR で 6 等はエラー）
 
-### 5.6 DELETE /subscriptions/{id} → 204
+### 5.5 DELETE /subscriptions/{id} → 204
 - 物理削除（リマインダーも CASCADE 削除）
 
-### 5.7 POST /subscriptions/{id}/cancel → 200
+### 5.6 POST /subscriptions/{id}/cancel → 200
 - `status=CANCELED`、`canceled_at=now()`、未送信リマインダーを `SKIPPED(SUBSCRIPTION_CANCELED)`
 - 既に CANCELED：409 `ALREADY_CANCELED`
 
-### 5.8 POST /subscriptions/{id}/reactivate → 200
+### 5.7 POST /subscriptions/{id}/reactivate → 200
 - `status=ACTIVE`、`canceled_at=NULL`、`next_renewal_date` を再計算、リマインダー生成
 - 既に ACTIVE：409 `ALREADY_ACTIVE`
 - 件数上限は解約済みも含めてカウントしているため再チェック不要
 
-### 5.9 GET /subscriptions/{id}/reminders → 200
-
-```json
-{
-  "items": [
-    {
-      "id": "c9...",
-      "renewalDate": "2026-10-12",
-      "offsetDays": 7,
-      "scheduledAt": "2026-10-05T00:00:00Z",
-      "status": "SENT",
-      "skipReason": null,
-      "sentAt": "2026-10-05T00:01:12Z"
-    }
-  ]
-}
-```
-- 新しい順、最大 50 件。`lastError` などの内部情報は返さない
+> 通知履歴の API（`GET /subscriptions/{id}/reminders`）は持たない（[01](01_requirements.md) F-REM-09 は廃止）
 
 ## 6. ダッシュボード API
 

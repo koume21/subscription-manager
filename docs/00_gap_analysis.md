@@ -71,3 +71,5 @@
 - メールのバウンス（不達）検知 Webhook
 - 価格改定の履歴管理（金額は上書き更新）
 - 管理者ロール・複数人での共有
+- サブスクの詳細画面と 1 件取得 API（`GET /subscriptions/{id}`）。一覧と編集はホーム画面にまとめる
+- 通知履歴の画面表示と API（`GET /subscriptions/{id}/reminders`）。送信状態は reminders テーブルに記録するだけにする

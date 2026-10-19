@@ -71,7 +71,7 @@ pnpm dev                          # web / api / worker を並列起動
 | ユニット | Vitest | `domain/`（更新日計算、金額換算、リマインダー計画） | **最重点**。月末・うるう年・TZ・境界値を網羅 |
 | 統合（API） | Vitest ＋ Supertest ＋ 実 Postgres | 各エンドポイント | 認可（他人のリソース 404）、バリデーション、ステータスコード |
 | 統合（ジョブ） | Vitest ＋ 実 Postgres ＋ 実 Redis ＋ モック MailSender | scan / send / advance | **冪等性**（同じジョブ 2 回実行で 1 通、ワーカー 2 並列で 1 通、送信後クラッシュ再現） |
-| E2E | Playwright | サインアップ→認証→登録→ダッシュボード | ハッピーパスのみ最小限 |
+| E2E | Playwright | サインアップ→認証→登録→ホーム | ハッピーパスのみ最小限 |
 
 ### 2.1 必須テストケース（抜粋）
 

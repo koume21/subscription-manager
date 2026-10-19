@@ -296,7 +296,7 @@ FOR UPDATE OF s SKIP LOCKED;
 | From | `サブスク管理 <noreply@{送信ドメイン}>`（SPF・DKIM・DMARC を設定） |
 | 件名（通常） | `【{N}日後に更新】{サービス名}（{金額}円）` ／ 当日は `【本日更新】...` |
 | 件名（トライアル） | `【{N}日後にトライアル終了・課金開始】{サービス名}` |
-| 本文 | サービス名、更新日（曜日付き）、金額、請求サイクル、解約ページ URL（あれば）、メモ、アプリの詳細画面リンク |
+| 本文 | サービス名、更新日（曜日付き）、金額、請求サイクル、解約ページ URL（あれば）、メモ、アプリのホーム画面リンク |
 | フッター | 配信停止リンク、通知設定画面リンク |
 | ヘッダー | `List-Unsubscribe: <https://{APP_URL}/api/v1/email/unsubscribe?token=...>`、`List-Unsubscribe-Post: List-Unsubscribe=One-Click` |
 | 形式 | HTML ＋ テキスト（マルチパート） |
