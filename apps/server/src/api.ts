@@ -2,6 +2,7 @@ import express from 'express';
 import { APP_NAME } from '@subs/shared/schemas';
 import { errorHandler  } from './middlewares/errorHandler';
 import { authRouter } from './routes/auth';
+import { subscriptionRouter } from './routes/subscription';
 import { requireAuth } from './middlewares/requireAuth';
 import cookieParser from 'cookie-parser';
 
@@ -21,6 +22,8 @@ app.use('/api/v1/auth', authRouter);
 app.get('/api/v1/me', requireAuth, (_req, res) => {
   res.json(res.locals.user);
 });
+
+app.use('/api/v1/subscriptions', subscriptionRouter);
 
 // middlewaresによるエラー処理
 app.use(errorHandler);
